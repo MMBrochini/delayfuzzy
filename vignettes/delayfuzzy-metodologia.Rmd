@@ -1,0 +1,111 @@
+---
+title: "Correção de atrasos na notificação de SRAG usando números fuzzy"
+author: "Mônica Brochini"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Metodologia DelayFuzzy}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 1. Introdução
+
+O atraso da notificação é um fator crítico para a vigilância epimdeiológica da doença e gestão de ações que podem conter a transmissão. Este trabalho apresenta um método baseado em lógica fuzzy para classificar atrasos no tratamento através de núemros triangulares fuzzy.
+
+---
+
+## 2. Dados
+
+Foram utilizados dados de notificação de casos de srag (sivep-gripe), contendo:
+
+- Data dos primeiros sintomas  
+- Data de início do tratamento  
+- Código da notificação  
+
+---
+
+## 3. Metodologia
+
+A diferença entre as datas foi usada para calcular o atraso em dias.  
+Funções de pertinência fuzzy foram aplicadas para classificar os atrasos.
+
+```r
+library(delayfuzzy)
+
+calcular_atraso()
+Responsável por transformar diferenças entre datas em uma variável discreta de atraso semanal, que fundamenta toda a modelagem subsequente.
+Entrada principal:base individual com datas
+Saída: base com coluna atrasoSemanas
+
+matriz_atraso()
+Constrói a matriz de frequências de atraso por semana epidemiológica.
+Realiza a tabulação cruzada entre a semana epidemiológica de notificação e o atraso em semanas, formando a matriz observada Xi,j
+Entrada
+base com atraso calculado
+Saída
+matriz de frequências X
+
+matriz_cumulativa()
+Gera a matriz cumulativa de notificações.
+Calcula o número acumulado de notificações observadas até cada atraso, resultando na matriz Ci,j
+Entrada
+matriz de atraso 𝑋
+
+Saída
+matriz cumulativa 𝐶
+
+estimar_Fj()
+Estima os fatores de atraso Fj
+Calcula a razão entre contagens acumuladas sucessivas para cada atraso, assumindo monotonicidade e garantindo 0 < Fj <= 1
+Entrada 
+Matriz cumulativa 𝐶
+atraso j
+
+Saída
+Escalar Fj
+
+Estimar_lj()
+Estima a incerteza associada aos fatores Fj
+Calcula a largura dos números fuzzy triangulares a partir da relação entre a matriz observada e a cumulativa
+
+Entrada 
+Matriz cumulativa C
+Matriz esperada X
+atraso j
+
+Saída
+escalar lj
+
+mult_fuzzy()
+Implementa a multiplicação aproximada de números fuzzy triangulares.
+Executa a propagação da incerteza ao combinar fatores fuzzy com valores cumulativos, conforme regras de aritmética fuzzy.
+
+Entrada
+dois números fuzzy triangulares
+
+Saída
+número fuzzy triangular resultante
+
+propagar_fuzzy()
+Propaga a correção fuzzy ao longo da matriz temporal.
+Aplica recursivamente os fatores fuzzy ~Fj à matriz cumulativa para estimar valores não observados
+
+Entrada
+matriz cumulativa
+vetores Fj lj
+
+Saída
+matrizes corrigidas
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(delayfuzzy)
+```

@@ -4,13 +4,17 @@
 \alias{calcular_atraso}
 \title{Calcula o atraso de notificação em semanas}
 \usage{
-calcular_atraso(dados)
+calcular_atraso(dados, data_notificacao, data_sintomas)
 }
 \arguments{
-\item{dados}{Base de dados com datas}
+\item{dados}{Base de dados}
+
+\item{data_notificacao}{Coluna da data de notificação}
+
+\item{data_sintomas}{Coluna da data de início dos sintomas}
 }
 \value{
-Base com coluna de atraso
+Base com coluna atrasoSemanas
 }
 \description{
 Calcula o atraso de notificação em semanas

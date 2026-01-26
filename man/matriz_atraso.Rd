@@ -10,7 +10,7 @@ matriz_atraso(dados)
 \item{dados}{Base com atraso calculado}
 }
 \value{
-Matriz de atraso
+Matriz de atraso (frequências)
 }
 \description{
 Cria matriz de atrasos por semana epidemiológica
