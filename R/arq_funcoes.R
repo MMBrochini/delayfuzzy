@@ -80,10 +80,15 @@ matriz_cumulativa <- function(matriz) {
 estimar_Fj <- function(C, j) {
 
   I <- nrow(C)
+
+  if (I - j - 1 < 1) {
+    return(NA_real_)
+  }
+
   indices_i <- 1:(I - j - 1)
 
-  sum(C[indices_i, j]) /
-    sum(C[indices_i, j + 1])
+  sum(C[indices_i, j], na.rm = TRUE) /
+    sum(C[indices_i, j + 1], na.rm = TRUE)
 }
 
 
@@ -98,11 +103,17 @@ estimar_Fj <- function(C, j) {
 calc_lj <- function(C, X, j) {
 
   I <- nrow(C)
+
+  if (I - j - 1 < 1) {
+    return(NA_real_)
+  }
+
   indices_i <- 1:(I - j - 1)
 
-  sum(X[indices_i, j + 1]) /
-    sum(C[indices_i, j])
+  sum(X[indices_i, j + 1], na.rm = TRUE) /
+    sum(C[indices_i, j], na.rm = TRUE)
 }
+
 
 
 #' Multiplicação de números fuzzy triangulares
@@ -136,22 +147,25 @@ mult_fuzzy <- function(A, B) {
 propagar_fuzzy <- function(C, Fjs, ljs) {
 
   I <- nrow(C)
+  J <- ncol(C)
 
   Cc <- C
-  left_C <- matrix(0, I, I)
-  right_C <- matrix(0, I, I)
+  left_C  <- matrix(0, nrow = I, ncol = J)
+  right_C <- matrix(0, nrow = I, ncol = J)
 
   for (i in 2:I) {
     for (j in (I - i + 1):(I - 1)) {
+
+      if (j + 1 > J || is.na(Fjs[j]) || is.na(ljs[j])) next
 
       Cij <- c(Cc[i, j], left_C[i, j], right_C[i, j])
       Fj  <- c(Fjs[j], ljs[j], ljs[j])
 
       Cij1 <- mult_fuzzy(Fj, Cij)
 
-      Cc[i, j + 1] <- Cij1[1]
-      left_C[i, j + 1] <- Cij1[2]
-      right_C[i, j + 1] <- Cij1[3]
+      Cc[i, j + 1]       <- Cij1[1]
+      left_C[i, j + 1]   <- Cij1[2]
+      right_C[i, j + 1]  <- Cij1[3]
     }
   }
 
@@ -161,6 +175,7 @@ propagar_fuzzy <- function(C, Fjs, ljs) {
     direita = right_C
   )
 }
+
 
 
 #' Correção de atraso por estimadores fuzzy
@@ -175,23 +190,31 @@ estimacao_delay_fuzzy <- function(dados,
                                   data_notificacao,
                                   data_sintomas) {
 
+  # 1. Calcular atraso em semanas
   dados <- calcular_atraso(dados, data_notificacao, data_sintomas)
 
+  # 2. Matriz de atrasos observados
   X <- matriz_atraso(dados)
+
+  # 3. Matriz cumulativa
   C <- matriz_cumulativa(X)
 
-  J <- ncol(C) - 1
+  # 4. Definição correta do domínio de j
+  I <- nrow(C)
+  j_validos <- 1:(I - 2)
 
-  Fjs <- sapply(1:J, estimar_Fj, C = C)
-  ljs <- sapply(1:J, calc_lj, C = C, X = X)
+  # 5. Estimadores Fj e larguras lj
+  Fjs <- sapply(j_validos, estimar_Fj, C = C)
+  ljs <- sapply(j_validos, calc_lj, C = C, X = X)
 
+  # 6. Propagação fuzzy
   previsao <- propagar_fuzzy(C, Fjs, ljs)
 
   list(
-    matriz_atraso = X,
+    matriz_atraso     = X,
     matriz_cumulativa = C,
-    Fj = Fjs,
-    lj = ljs,
-    previsao = previsao
+    Fj                = Fjs,
+    lj                = ljs,
+    previsao          = previsao
   )
 }
